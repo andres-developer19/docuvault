@@ -97,14 +97,16 @@ function bindAuthEvents() {
         else showToast('Cuenta creada. Revisa tu correo para confirmar.', 'success');
     });
 
-    $('logout-btn').addEventListener('click', async () => {
-        await supabaseClient.auth.signOut();
-        resetState();
-        $('app-screen').classList.add('hidden');
-        $('auth-screen').classList.remove('hidden');
-        ['login-email', 'login-password', 'register-name', 'register-email', 'register-password'].forEach(id => $(id).value = '');
-        showToast('Sesión cerrada');
-    });
+    $('logout-btn').addEventListener('click', doLogout);
+}
+
+async function doLogout() {
+    await supabaseClient.auth.signOut();
+    resetState();
+    $('app-screen').classList.add('hidden');
+    $('auth-screen').classList.remove('hidden');
+    ['login-email', 'login-password', 'register-name', 'register-email', 'register-password'].forEach(id => $(id).value = '');
+    showToast('Sesión cerrada');
 }
 
 function resetState() {
@@ -992,7 +994,13 @@ async function inviteUser() {
     $('share-email').value = '';
     await loadAllData();
     renderFamilyDetail();
-    showToast('Invitación enviada a ' + email, 'success');
+    let mailOk = true;
+    try {
+        await supabaseClient.functions.invoke('send-invite', {
+            body: { family_id: family.id, invited_email: email }
+        });
+    } catch (e) { mailOk = false; }
+    showToast(mailOk ? 'Invitación enviada a ' + email : 'Invitación creada, pero NO se pudo enviar el correo', mailOk ? 'success' : 'error');
 }
 
 async function acceptInvite(familyId) {
@@ -1448,6 +1456,7 @@ function bindAppEvents() {
     $('btn-confirm-move').addEventListener('click', saveMove);
 
     $('btn-share').addEventListener('click', inviteUser);
+    $('btn-logout-settings').addEventListener('click', doLogout);
 
     $('btn-save-settings').addEventListener('click', async () => {
         const name = $('settings-name').value.trim();
