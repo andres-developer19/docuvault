@@ -979,7 +979,7 @@ async function deleteMember(memberId) {
 /* ============ SHARING ============ */
 async function inviteUser() {
     const family = state.currentFamily;
-    const email = $('share-email').value.trim();
+    const email = ($('share-email').value.trim() || '').toLowerCase();
     if (!family || !isOwner(family)) return;
     if (!email.includes('@')) { showToast('Correo inválido', 'error'); return; }
     if (email.toLowerCase() === (state.user.email || '').toLowerCase()) { showToast('No puedes invitarte a ti mismo', 'error'); return; }
