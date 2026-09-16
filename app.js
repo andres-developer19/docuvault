@@ -149,7 +149,9 @@ async function createDefaultFamily() {
     const { data: mine } = await supabaseClient.from('families').select('id');
     const { data: shared } = await supabaseClient.from('family_access').select('id');
     if ((!mine || mine.length === 0) && (!shared || shared.length === 0)) {
-        await supabaseClient.from('families').insert({ user_id: state.user.id, name: 'Mi Familia' });
+        const famId = crypto.randomUUID();
+        await supabaseClient.from('families').insert({ id: famId, user_id: state.user.id, name: 'Mi Familia' });
+        await supabaseClient.from('members').insert({ user_id: state.user.id, family_id: famId, name: 'Yo', relation: 'Titular' });
     }
 }
 
@@ -745,9 +747,10 @@ function escapeHtml(str) {
 async function createFamily() {
     const name = $('family-name').value.trim();
     if (!name) { showToast('Escribe un nombre para la familia', 'error'); return; }
-    const { data, error } = await supabaseClient.from('families').insert({ user_id: state.user.id, name }).select();
+    const famId = crypto.randomUUID();
+    const { error } = await supabaseClient.from('families').insert({ id: famId, user_id: state.user.id, name });
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
-    await supabaseClient.from('members').insert({ user_id: state.user.id, family_id: data[0].id, name: 'Yo', relation: 'Titular' });
+    await supabaseClient.from('members').insert({ user_id: state.user.id, family_id: famId, name: 'Yo', relation: 'Titular' });
     $('family-name').value = '';
     $('family-modal').classList.add('hidden');
     await loadAllData();
@@ -1091,22 +1094,22 @@ async function saveInlineCreate() {
     if (!familyId) { showToast('Primero selecciona la familia', 'error'); return; }
 
     if (inlineType === 'member') {
-        const { data, error } = await supabaseClient.from('members')
-            .insert({ user_id: state.user.id, family_id: familyId, name })
-            .select();
+        const memId = crypto.randomUUID();
+        const { error } = await supabaseClient.from('members')
+            .insert({ id: memId, user_id: state.user.id, family_id: familyId, name });
         if (error) { showToast('Error: ' + error.message, 'error'); return; }
         await loadAllData();
-        populateMemberOptions(String(familyId), data[0].id);
-        populateCategorySelect(String(familyId), data[0].id);
+        populateMemberOptions(String(familyId), memId);
+        populateCategorySelect(String(familyId), memId);
     } else if (inlineType === 'category') {
+        const catId = crypto.randomUUID();
         const memberId = $('upload-member').value;
         const memberVal = memberId && memberId !== '__new-member__' ? memberId : null;
-        const { data, error } = await supabaseClient.from('categories')
-            .insert({ user_id: state.user.id, family_id: familyId, member_id: memberVal, name })
-            .select();
+        const { error } = await supabaseClient.from('categories')
+            .insert({ id: catId, user_id: state.user.id, family_id: familyId, member_id: memberVal, name });
         if (error) { showToast('Error: ' + error.message, 'error'); return; }
         await loadAllData();
-        populateCategorySelect(String(familyId), memberVal || '', data[0].id);
+        populateCategorySelect(String(familyId), memberVal || '', catId);
     }
 
     const catId = $('upload-category').value;
