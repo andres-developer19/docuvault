@@ -994,13 +994,7 @@ async function inviteUser() {
     $('share-email').value = '';
     await loadAllData();
     renderFamilyDetail();
-    let mailOk = true;
-    try {
-        await supabaseClient.functions.invoke('send-invite', {
-            body: { family_id: family.id, invited_email: email }
-        });
-    } catch (e) { mailOk = false; }
-    showToast(mailOk ? 'Invitación enviada a ' + email : 'Invitación creada, pero NO se pudo enviar el correo', mailOk ? 'success' : 'error');
+    showToast('Invitación creada para ' + email, 'success');
 }
 
 async function acceptInvite(familyId) {
