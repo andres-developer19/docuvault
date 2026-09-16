@@ -227,6 +227,22 @@ function switchView(viewName) {
     window.scrollTo({ top: 0 });
 }
 
+function setupAutoHideNav() {
+    if (window.innerWidth > 900) return;
+    let lastY = window.scrollY;
+    window.addEventListener('scroll', () => {
+        const y = window.scrollY;
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar) return;
+        if (y > lastY && y > 120) {
+            sidebar.classList.add('hide-nav');
+        } else {
+            sidebar.classList.remove('hide-nav');
+        }
+        lastY = y;
+    }, { passive: true });
+}
+
 /* ============ DASHBOARD ============ */
 function renderDashboard() {
     $('stat-total').textContent = state.documents.length;
@@ -1399,6 +1415,8 @@ function bindAppEvents() {
             switchView(view);
         });
     });
+
+    setupAutoHideNav();
 
     $('search-input').addEventListener('input', renderDocumentsView);
     $('filter-family').addEventListener('change', renderDocumentsView);
