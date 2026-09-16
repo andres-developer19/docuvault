@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuVault - Gestor de Documentos</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- ========== AUTH SCREEN ========== -->
+    <div id="auth-screen" class="auth-screen hidden">
+        <div class="auth-card">
+            <div class="auth-logo"><i class="fas fa-folder-open"></i></div>
+            <h1>DocuVault</h1>
+            <p class="auth-subtitle">Tu gestor de documentos seguro</p>
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Iniciar sesión</button>
+                <button class="auth-tab" data-tab="register">Registrarse</button>
+            </div>
+            <form id="login-form" class="auth-form">
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="login-email" placeholder="Correo electrónico" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="login-password" placeholder="Contraseña" required>
+                </div>
+                <button type="submit" class="btn-primary">Ingresar</button>
+            </form>
+            <form id="register-form" class="auth-form hidden">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="register-name" placeholder="Tu nombre" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="register-email" placeholder="Correo electrónico" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="register-password" placeholder="Contraseña (mín. 6 caracteres)" required>
+                </div>
+                <button type="submit" class="btn-primary">Crear cuenta</button>
+            </form>
+            <div id="auth-error" class="error-message hidden"></div>
+        </div>
+    </div>
+
+    <!-- ========== MAIN APP ========== -->
+    <div id="app-screen" class="app-screen hidden">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-folder-open"></i>
+                <span>DocuVault</span>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-view="dashboard"><i class="fas fa-th-large"></i> Dashboard</button>
+                <button class="nav-item" data-view="documents"><i class="fas fa-file-alt"></i> Mis Documentos</button>
+                <button class="nav-item" data-view="families"><i class="fas fa-users"></i> Familias</button>
+                <button class="nav-item" data-view="settings"><i class="fas fa-cog"></i> Configuración</button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <div class="user-details"><span id="user-name">Usuario</span></div>
+                </div>
+                <button id="logout-btn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- ===== DASHBOARD ===== -->
+            <section id="view-dashboard" class="view active">
+                <header class="view-header">
+                    <h1>Dashboard</h1>
+                    <p>Busca y organiza todos tus documentos</p>
+                </header>
+                <div class="toolbar dash-toolbar">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="dash-search" placeholder="Buscar por nombre, miembro, categoría, tipo...">
+                        <button class="dash-clear hidden" id="dash-clear"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="filter-group">
+                        <select id="dash-member"><option value="">Todos los miembros</option></select>
+                        <select id="dash-sort">
+                            <option value="recent">Más recientes</option>
+                            <option value="name">Nombre (A-Z)</option>
+                            <option value="biggest">Más pesados</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-file-alt"></i></div><div class="stat-info"><span class="stat-number" id="stat-total">0</span><span class="stat-label">Total documentos</span></div></div>
+                    <div class="stat-card"><div class="stat-icon green"><i class="fas fa-users"></i></div><div class="stat-info"><span class="stat-number" id="stat-families">0</span><span class="stat-label">Familias</span></div></div>
+                    <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-folder"></i></div><div class="stat-info"><span class="stat-number" id="stat-categories">0</span><span class="stat-label">Categorías</span></div></div>
+                    <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-database"></i></div><div class="stat-info"><span class="stat-number" id="stat-storage">0 MB</span><span class="stat-label">Almacenamiento</span></div></div>
+                </div>
+                <div class="recent-uploads">
+                    <h2 id="dash-section-title">Documentos recientes</h2>
+                    <div id="dash-documents" class="documents-grid"></div>
+                </div>
+            </section>
+
+            <!-- ===== ALL DOCUMENTS ===== -->
+            <section id="view-documents" class="view">
+                <header class="view-header">
+                    <h1>Mis Documentos</h1>
+                    <p>Busca con filtros y navega tus carpetas ordenadas</p>
+                </header>
+                <div class="toolbar">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-input" placeholder="Buscar por nombre, miembro, categoría...">
+                    </div>
+                    <div class="filter-group">
+                        <select id="filter-family"><option value="">Todas las familias</option></select>
+                        <select id="filter-member"><option value="">Todos los miembros</option></select>
+                        <select id="filter-category"><option value="">Todas las categorías</option></select>
+                        <select id="filter-subcategory"><option value="">Todas las carpetas</option></select>
+                        <select id="filter-sort">
+                            <option value="recent">Más recientes</option>
+                            <option value="name">Nombre (A-Z)</option>
+                            <option value="biggest">Más pesados</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" id="btn-upload"><i class="fas fa-upload"></i> Subir documento</button>
+                </div>
+                <div class="type-chips" id="filter-type">
+                    <button data-type="all" class="chip active">Todos</button>
+                    <button data-type="pdf" class="chip"><i class="fas fa-file-pdf"></i> PDF</button>
+                    <button data-type="image" class="chip"><i class="fas fa-image"></i> Imágenes</button>
+                    <button data-type="word" class="chip"><i class="fas fa-file-word"></i> Word</button>
+                    <button data-type="excel" class="chip"><i class="fas fa-file-excel"></i> Excel</button>
+                    <button data-type="other" class="chip"><i class="fas fa-file-alt"></i> Otros</button>
+                </div>
+                <div id="documents-list" class="documents-page"></div>
+            </section>
+
+            <!-- ===== FAMILIES ===== -->
+            <section id="view-families" class="view">
+                <header class="view-header">
+                    <h1>Familias</h1>
+                    <p>Toca una familia para entrar y ver sus carpetas</p>
+                </header>
+                <div id="invites-panel" class="invites-panel hidden">
+                    <h3><i class="fas fa-envelope-open-text"></i> Invitaciones de familia</h3>
+                    <div id="invites-list"></div>
+                </div>
+                <button class="btn-primary mb-20" id="btn-add-family"><i class="fas fa-plus"></i> Crear familia</button>
+                <div id="families-list" class="families-grid"></div>
+            </section>
+
+            <!-- ===== FAMILY DETAIL ===== -->
+            <section id="view-family-detail" class="view">
+                <nav id="breadcrumb" class="breadcrumb"></nav>
+                <header class="view-header">
+                    <h1 id="family-detail-title">Familia</h1>
+                    <p>Organiza por miembros (hijos, esposa) y categorías</p>
+                </header>
+                <button class="btn-primary mb-20" id="btn-add-member"><i class="fas fa-user-plus"></i> Agregar miembro</button>
+                <button class="btn-secondary mb-20" id="btn-add-category"><i class="fas fa-plus"></i> Agregar categoría</button>
+                <button class="btn-secondary mb-20" id="btn-upload-in-folder"><i class="fas fa-upload"></i> Subir aquí</button>
+
+                <h3 class="section-title">Miembros de la familia</h3>
+                <div id="member-grid" class="folders-grid"></div>
+
+                <h3 class="section-title">Categorías generales</h3>
+                <div id="category-grid" class="folders-grid"></div>
+
+                <div id="family-sharing-panel" class="share-panel">
+                    <h3><i class="fas fa-share-alt"></i> Compartir con tu pareja u otro usuario</h3>
+                    <p class="muted">La persona debe crearse una cuenta en esta app con el correo que invites.</p>
+                    <div class="share-input-row">
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="share-email" placeholder="Correo de la persona (ej: esposa)">
+                        </div>
+                        <button class="btn-primary" id="btn-share">Invitar</button>
+                    </div>
+                    <h4>Usuarios con acceso</h4>
+                    <div id="share-users-list" class="share-list"></div>
+                    <h4>Invitaciones pendientes</h4>
+                    <div id="pending-invites-list" class="share-list"></div>
+                </div>
+            </section>
+
+            <!-- ===== MEMBER DETAIL ===== -->
+            <section id="view-member-detail" class="view">
+                <nav id="breadcrumb-member" class="breadcrumb"></nav>
+                <header class="view-header">
+                    <h1 id="member-detail-title">Miembro</h1>
+                    <p>Carpetas y documentos de este miembro</p>
+                </header>
+                <button class="btn-primary mb-20" id="btn-add-category-member"><i class="fas fa-plus"></i> Agregar categoría</button>
+                <button class="btn-secondary mb-20" id="btn-upload-in-member"><i class="fas fa-upload"></i> Subir aquí</button>
+                <h3 class="section-title">Categorías</h3>
+                <div id="member-category-grid" class="folders-grid"></div>
+                <h3 class="section-title">Documentos directos</h3>
+                <div id="member-docs" class="documents-grid"></div>
+            </section>
+
+            <!-- ===== CATEGORY DETAIL ===== -->
+            <section id="view-category-detail" class="view">
+                <nav id="breadcrumb-cat" class="breadcrumb"></nav>
+                <header class="view-header">
+                    <h1 id="category-detail-title">Categoría</h1>
+                    <p>Crea subcarpetas o sube documentos directamente</p>
+                </header>
+                <button class="btn-primary mb-20" id="btn-add-subcategory"><i class="fas fa-plus"></i> Agregar subcarpeta</button>
+                <button class="btn-secondary mb-20" id="btn-rename-category"><i class="fas fa-pen"></i> Renombrar</button>
+                <button class="btn-danger-outline mb-20" id="btn-delete-category"><i class="fas fa-trash"></i> Eliminar carpeta</button>
+                <button class="btn-secondary mb-20" id="btn-upload-in-category"><i class="fas fa-upload"></i> Subir aquí</button>
+                <h3 class="section-title">Subcarpetas</h3>
+                <div id="subcategory-grid" class="folders-grid"></div>
+                <h3 class="section-title">Documentos en esta carpeta</h3>
+                <div id="category-docs" class="documents-page"></div>
+            </section>
+
+            <!-- ===== SUBCATEGORY DETAIL ===== -->
+            <section id="view-subcategory-detail" class="view">
+                <nav id="breadcrumb-sub" class="breadcrumb"></nav>
+                <header class="view-header">
+                    <h1 id="subcategory-detail-title">Subcarpeta</h1>
+                    <p>Documentos en esta carpeta</p>
+                </header>
+                <button class="btn-secondary mb-20" id="btn-rename-subcategory"><i class="fas fa-pen"></i> Renombrar</button>
+                <button class="btn-danger-outline mb-20" id="btn-delete-subcategory"><i class="fas fa-trash"></i> Eliminar carpeta</button>
+                <button class="btn-secondary mb-20" id="btn-upload-in-subcategory"><i class="fas fa-upload"></i> Subir aquí</button>
+                <div id="subcategory-docs" class="documents-page"></div>
+            </section>
+
+            <!-- ===== SETTINGS ===== -->
+            <section id="view-settings" class="view">
+                <header class="view-header">
+                    <h1>Configuración</h1>
+                    <p>Administra tu perfil</p>
+                </header>
+                <div class="settings-card">
+                    <h3>Información de la cuenta</h3>
+                    <div class="settings-row"><label>Nombre</label><input type="text" id="settings-name" placeholder="Tu nombre"></div>
+                    <div class="settings-row"><label>Correo electrónico</label><input type="email" id="settings-email" disabled></div>
+                    <button class="btn-primary" id="btn-save-settings"><i class="fas fa-save"></i> Guardar cambios</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ========== MODALS ========== -->
+    <!-- Upload -->
+    <div id="upload-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Subir documento</h2>
+                <button class="modal-close" data-close="upload-modal">&times;</button>
+            </div>
+            <div id="drop-zone" class="drop-zone">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Arrastra tus archivos aquí o</p>
+                <button class="btn-secondary" id="btn-browse">Seleccionar archivos</button>
+                <input type="file" id="file-input" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" hidden>
+                <p class="drop-hint">PDF, JPG, PNG, DOC, XLS hasta 20MB</p>
+            </div>
+            <div id="upload-files-list"></div>
+            <div class="modal-footer column">
+                <div class="input-group"><i class="fas fa-users"></i><select id="upload-family"><option value="">Seleccionar familia...</option></select></div>
+                <div class="input-group"><i class="fas fa-user"></i><select id="upload-member"><option value="">Sin miembro</option></select></div>
+                <div class="input-group"><i class="fas fa-folder"></i><select id="upload-category"><option value="">Seleccionar categoría...</option></select></div>
+                <div class="input-group"><i class="fas fa-folder-open"></i><select id="upload-subcategory"><option value="">Sin subcarpeta</option></select></div>
+                <div id="inline-create" class="inline-create hidden">
+                    <p id="inline-create-label">Crear nuevo elemento</p>
+                    <div class="input-group"><i class="fas fa-plus"></i><input type="text" id="inline-input" placeholder="Nombre del nuevo elemento"></div>
+                    <button class="btn-secondary" id="btn-inline-save"><i class="fas fa-check"></i> Guardar y continuar</button>
+                </div>
+                <button class="btn-primary" id="btn-confirm-upload" disabled><i class="fas fa-check"></i> Subir archivos</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Family -->
+    <div id="family-modal" class="modal hidden">
+        <div class="modal-content small">
+            <div class="modal-header"><h2>Crear familia</h2><button class="modal-close" data-close="family-modal">&times;</button></div>
+            <div class="input-group"><i class="fas fa-users"></i><input type="text" id="family-name" placeholder="Nombre (ej: Familia Pérez)"></div>
+            <button class="btn-primary" id="btn-confirm-family"><i class="fas fa-check"></i> Crear familia</button>
+        </div>
+    </div>
+
+    <!-- Add Member -->
+    <div id="member-modal" class="modal hidden">
+        <div class="modal-content small">
+            <div class="modal-header"><h2>Agregar miembro</h2><button class="modal-close" data-close="member-modal">&times;</button></div>
+            <div class="input-group"><i class="fas fa-user"></i><input type="text" id="member-name" placeholder="Nombre (ej: Juan, María)"></div>
+            <div class="input-group"><i class="fas fa-tag"></i>
+                <select id="member-relation">
+                    <option value="Hijo">Hijo</option>
+                    <option value="Hija">Hija</option>
+                    <option value="Esposa">Esposa</option>
+                    <option value="Esposo">Esposo</option>
+                    <option value="Padre">Padre</option>
+                    <option value="Madre">Madre</option>
+                    <option value="Hermano">Hermano</option>
+                    <option value="Hermana">Hermana</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <button class="btn-primary" id="btn-confirm-member"><i class="fas fa-check"></i> Agregar miembro</button>
+        </div>
+    </div>
+
+    <!-- Add Category -->
+    <div id="category-modal" class="modal hidden">
+        <div class="modal-content small">
+            <div class="modal-header"><h2>Agregar categoría</h2><button class="modal-close" data-close="category-modal">&times;</button></div>
+            <div class="input-group"><i class="fas fa-folder"></i><input type="text" id="category-name" placeholder="Ej: Escolar, Documentos de México, Salud..."></div>
+            <button class="btn-primary" id="btn-confirm-category"><i class="fas fa-check"></i> Agregar categoría</button>
+        </div>
+    </div>
+
+    <!-- Add Subcategory -->
+    <div id="subcategory-modal" class="modal hidden">
+        <div class="modal-content small">
+            <div class="modal-header"><h2>Agregar subcarpeta</h2><button class="modal-close" data-close="subcategory-modal">&times;</button></div>
+            <div class="input-group"><i class="fas fa-folder-open"></i><input type="text" id="subcategory-name" placeholder="Ej: Bimestre 2025, Tanda 2, Pasaporte..."></div>
+            <button class="btn-primary" id="btn-confirm-subcategory"><i class="fas fa-check"></i> Agregar subcarpeta</button>
+        </div>
+    </div>
+
+    <!-- Rename Category -->
+    <div id="category-edit-modal" class="modal hidden">
+        <div class="modal-content small">
+            <div class="modal-header"><h2>Renombrar carpeta</h2><button class="modal-close" data-close="category-edit-modal">&times;</button></div>
+            <div class="input-group"><i class="fas fa-folder"></i><input type="text" id="category-edit-name" placeholder="Nuevo nombre de la carpeta"></div>
+            <button class="btn-primary" id="btn-confirm-category-edit"><i class="fas fa-check"></i> Guardar</button>
+        </div>
+    </div>
+
+    <!-- Rename Subcategory -->
+    <div id="subcategory-edit-modal" class="modal hidden">
+        <div class="modal-content small">
+            <div class="modal-header"><h2>Renombrar subcarpeta</h2><button class="modal-close" data-close="subcategory-edit-modal">&times;</button></div>
+            <div class="input-group"><i class="fas fa-folder-open"></i><input type="text" id="subcategory-edit-name" placeholder="Nuevo nombre de la subcarpeta"></div>
+            <button class="btn-primary" id="btn-confirm-subcategory-edit"><i class="fas fa-check"></i> Guardar</button>
+        </div>
+    </div>
+
+    <!-- Move Document -->
+    <div id="move-modal" class="modal hidden">
+        <div class="modal-content small">
+            <div class="modal-header"><h2>Mover documento</h2><button class="modal-close" data-close="move-modal">&times;</button></div>
+            <p class="muted">Selecciona a qué miembro y carpeta moverlo (deja en blanco para carpeta directa de la familia).</p>
+            <div class="input-group"><i class="fas fa-user"></i><select id="move-member"><option value="">Sin miembro</option></select></div>
+            <div class="input-group"><i class="fas fa-folder"></i><select id="move-category"><option value="">Sin categoría</option></select></div>
+            <div class="input-group"><i class="fas fa-folder-open"></i><select id="move-subcategory"><option value="">Sin subcarpeta</option></select></div>
+            <button class="btn-primary" id="btn-confirm-move"><i class="fas fa-check"></i> Mover</button>
+        </div>
+    </div>
+
+    <!-- Preview -->
+    <div id="preview-modal" class="modal hidden">
+        <div class="modal-content preview">
+            <div class="modal-header"><h2 id="preview-title">Documento</h2><button class="modal-close" data-close="preview-modal">&times;</button></div>
+            <div id="preview-body" class="preview-body"></div>
+            <div class="preview-actions">
+                <button class="btn-primary" id="btn-download"><i class="fas fa-download"></i> Descargar</button>
+                <button class="btn-secondary" id="btn-move"><i class="fas fa-folder-open"></i> Mover</button>
+                <button class="btn-danger" id="btn-delete"><i class="fas fa-trash"></i> Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
